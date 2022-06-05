@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>US COVID rates 2020</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        /* the layout of the legend panel */
+        #legend {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 110px;
+            height: fit-content;
+            background: #fff;
+            margin-right: 20px;
+            margin-bottom: 40px;
+            padding: 10px 20px 10px 10px;
+            border-radius: 3px;
+            text-align: center;
+            font-family: 'Open Sans', sans-serif;
+        }
+        #subtitle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 110px;
+            background: #fff;
+            margin-right: 20px;
+            margin-bottom: 40px;
+            padding: 10px 20px 10px 10px;
+            border-radius: 3px;
+            text-align: center;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        /* #legend {
+    padding: 10px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    line-height: 18px;
+    height: 210px;
+    margin-bottom: 40px;
+    width: 150px;
+} */
+
+.legend-key {
+    display: inline-block;
+    border-radius: 20%;
+    width: 10px;
+    height: 10px;
+    margin-right: 5px;
+}
+
+        /* each line for a break */
+        .break {
+            position: relative;
+            margin: 0px;
+            padding: 0px;
+        }
+
+        /* basic style for a dot/circle */
+        .dot {
+            display: inline-block;
+            margin-top: 5px;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+
+        /* the label for the dot */
+        .dot-label {
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-style: italic;
+        }
+
+        /* the text color of a hyper link */
+        a {
+            color: black
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <!-- <div id="legend"></div> -->
+    <div class='map-overlay' id='legend'></div>
+    <div id="title">
+        USA COVID rates 2020
+    </div>
+    <div id="subtitle">
+        By Grace Xu
+    </div>
+    <script>
+        mapboxgl.accessToken =
+            'pk.eyJ1IjoiamFrb2J6aGFvIiwiYSI6ImNpcms2YWsyMzAwMmtmbG5icTFxZ3ZkdncifQ.P9MBej1xacybKcDN_jehvw';
+        let map = new mapboxgl.Map({
+            container: 'map', // container ID
+            style: 'mapbox://styles/mapbox/dark-v10',
+            zoom: 3, // starting zoom
+            center: [-98, 39], // starting center
+            projection: "albers"
+        });
+
+        const case_num = [50,100,200],
+            colors = ['rgb(208,209,230)', 'rgb(103,169,207)', 'rgb(1,108,89)'];//to be decided
+
+        //load data to the map as new layers.
+        //map.on('load', function loadingData() {
+        map.on('load', () => { //simplifying the function statement: arrow with brackets to define a function
+
+            // when loading a geojson, there are two steps
+            // add a source of the data and then add the layer out of the source
+            map.addSource('covid-rate', {
+                type: 'geojson',
+                data: 'assets/rates.geojson'
+            });
+
+            map.addLayer({
+                    'id': 'covid-rate-layer',
+                    'type': 'fill',
+                    'source': 'covid-rate',//minzoom:5
+                    'paint': {
+                        'fill-color': [
+                            'step',
+                            ['get', 'rates'],
+                            '#FFEDA0',   // stop_output_0
+                            20,          // stop_input_0
+                            '#FED976',   // stop_output_1
+                            40,          // stop_input_1
+                            '#FEB24C',   // stop_output_2
+                            60,          // stop_input_2
+                            '#FD8D3C',   // stop_output_3
+                            80,         // stop_input_3
+                            '#FC4E2A',   // stop_output_4
+                            100,         // stop_input_4
+                            '#E31A1C',   // stop_output_5
+                            120,         // stop_input_5
+                            '#BD0026',   // stop_output_6
+                            140,        // stop_input_6
+                            "#800026"    // stop_output_7
+                        ],
+                        'fill-outline-color': '#BBBBBB',
+                        'fill-opacity': 0.7,
+                    }
+                });
+
+                const layers = [
+                    '0-20',
+                    '21-40',
+                    '41-60',
+                    '61-80',
+                    '81-100',
+                    '101-120',
+                    '121-140',
+                    '140 and more'
+                ];
+                const colors = [
+                    '#FFEDA070',
+                    '#FED97670',
+                    '#FEB24C70',
+                    '#FD8D3C70',
+                    '#FC4E2A70',
+                    '#E31A1C70',
+                    '#BD002670',
+                    '#80002670'
+                ];
+
+
+            // click on tree to view magnitude in a popup
+            map.on('click', 'covid-rate-layer', (event) => {
+                new mapboxgl.Popup()
+                    .setLngLat(event.lngLat)
+                    .setHTML(`<strong>Covid Rates:</strong> ${event.features[0].properties.rates}`)
+                    .addTo(map);
+            });
+
+            const legend = document.getElementById('legend');
+legend.innerHTML = "<b>COVID Rates in USA 2020</b><br><br>";
+
+layers.forEach((layer, i) => {
+    const color = colors[i];
+    const item = document.createElement('div');
+    const key = document.createElement('span');
+    key.className = 'legend-key';
+    key.style.backgroundColor = color;
+
+    const value = document.createElement('span');
+    value.innerHTML = `${layer}`;
+    item.appendChild(key);
+    item.appendChild(value);
+    legend.appendChild(item);
+});
+
+        });
+
+
+        // create legend
+        // const legend = document.getElementById('legend');
+
+        // //set up legend case_num and labels
+        // var labels = ['<strong>Number of COVID Rates in USA 2020</strong>'],
+        //     vbreak;
+//         const legend = document.getElementById('legend');
+// legend.innerHTML = "<b>COVID Rates in USA 2020</b><br><br>";
+
+// layers.forEach((layer, i) => {
+//     const color = colors[i];
+//     const item = document.createElement('div');
+//     const key = document.createElement('span');
+//     key.className = 'legend-key';
+//     key.style.backgroundColor = color;
+
+//     const value = document.createElement('span');
+//     value.innerHTML = `${layer}`;
+//     item.appendChild(key);
+//     item.appendChild(value);
+//     legend.appendChild(item);
+// });
+        //iterate through case_num  and create a scaled circle and label for each
+        // for (var i = 0; i < case_num.length; i++) {
+        //     vbreak = case_num[i];
+        //     // you need to manually adjust the radius of each dot on the legend
+        //     // in order to make sure the legend can be properly referred to the dot on the map.
+        //     dot_radii = 5;
+        //     labels.push(
+        //         '<p class="break"><i class="dot" style="background:' + colors[i] + '; width: ' + dot_radii +
+        //         'px; height: ' +
+        //         dot_radii + 'px; "></i> <span class="dot-label" style="top: ' + dot_radii / 2 + 'px;">' + vbreak +
+        //         '</span></p>');
+
+        // }
+        // add the data source
+        const source =
+            '<p style="text-align: right; font-size:10pt">Source: <a href="https://github.com/nytimes/covid-19-data/blob/43d32dde2f87bd4dafbb7d23f5d9e878124018b8/live/us-counties.csv">NY Times</a></p>';
+        // combine all the html codes.
+        legend.innerHTML = labels.join('') + source;
+    </script>
+
+</body>
+
+</html>
